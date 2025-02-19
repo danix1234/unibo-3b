@@ -1,0 +1,16 @@
+1.  Qual e' il comando in ambiente linux con cui e' possibile identificare il default gateway? 
+2.  Quale comando devo usare per aggiungere un utente al gruppo sudo? Specificare la riga do comando da usare.
+3.  In quale file di log vengono registrati i comandi eseguiti con sudo?
+4.  Come effettua la risoluzione dei nomi un DNS configurato in modalita' forwarding?  
+5.  A cosa serve il protocollo smb?
+6.  Cosa sono le ACL e a cosa servono?
+7.  A cosa serve il servizio apparmor in un ambiente linux?
+8.  A cosa serve winbind? 
+9.  A cosa serve PAM? 
+10. Quali sono i ruoli FSMO? 
+11. A cosa serve l'infrastructure Master?
+12. Perche' si installano i Remote Server Administrator Tools in ambiente Windows? 
+13. Cos'e' il servizio Radius? 
+14. Gli script di startup di un PC del dominio possono essere definite in una policy di computer o in una policy di utente?
+15. A cosa server il comando nsupdate?
+16. A cosa serve il comando klist?

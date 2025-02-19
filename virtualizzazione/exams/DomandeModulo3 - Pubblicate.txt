@@ -1,0 +1,24 @@
+1. Cosa si intende per Dominio Windows?
+3. Quanti tipi di DC c'erano prima di Active Directory (Pre-Windows 2000)
+7. Come viene individuata una entry all'interno del Directory Service ?
+10. Da quali protocolli e' formato Active directory?
+11. Come realizza il SSO Active Directory?
+14. Quanti e quali tipi di DNS server possono esserci?
+15. Cosa rappresenta un record SRV all'interno del DNS
+17. Posso avere gruppi con lo stesso nome nello stesso dominio in OU diverse? Perche'?
+18. Cos'e' un sito Active Directory?
+19. Cosa e' memorizzato all'interno del Global Catalog?
+21. A cosa servono i ruoli FSMO?
+24. Come viene gestita la concorrenza sulla modifica di oggetti in AD?
+25. E' possibile far amministrare ad un utente non amministratore una parte di AD? Motivare la risposta
+27. Con VMware Workstation, posso far comunicare una VM con le macchina sulla rete e viceversa? Se si come?
+30. Come decido quante risorse (cpu e memoria) assegnare alla VM?
+31. Posso collegare ad una VM un disco di un'altra VM?
+32. Quali sono le differenze fra un disco thin e uno thick?
+36. Quando e' meglio clonare un VM?
+37. Cos'e' una snapshot di una VM? Quando e' meglio farla?
+38. Un DC, puo' avere un indirizzo assegnato via DHCP?
+40. Una volta installato il ruolo di Active Directory Domain service, il server e' gia' un DC?
+41. Il functional level si applica al dominio o alla foresta?
+45. Che strumento uso per gestire le deleghe?
+
