@@ -1,0 +1,29 @@
+var express = require('express');
+var bodyParser = require('body-parser');
+var mongoose = require('mongoose')
+var Alignment = require('./src/models/alignmentModels')
+
+//Creo istanza di express (web server)
+var app = express();
+
+//importo parser per leggere i parametri passati in POST
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+//connessione al db
+// il secondo mongodb e' il nome del container 
+// mongoose.connect('mongodb://asw_mongodb_1:27017/dbsa', { useNewUrlParser: true, useFindAndModify: false }, function(error) { if (error == true) console.log('connection failed? bho? '); else console.log('connection STRUNZ? bho? '); } );
+mongoose.connect('mongodb://127.0.0.1:27017/dbsa', { useNewUrlParser: true, useFindAndModify: false }, function(error) { if (error == true) console.log('connection failed? bho? '); else console.log('connection STRUNZ? bho? '); } );
+// mongoose.connect('mongodb://0.0.0:27017/dbsa', { useNewUrlParser: true, useFindAndModify: false }, function(error) { if (error == true) console.log('connection failed'); else console.log('connection STRUNZ'); } );
+// mongoose.connect('mongodb://mongodb/dbsa', { useNewUrlParser: true, useFindAndModify: false });
+// mongoose.connect('mongodb://localhost/dbsa', { useNewUrlParser: true, useFindAndModify: false });
+//mongoose.connect('mongodb://username:password@host:port', { useNewUrlParser: true, useFindAndModify: false });
+
+var routes = require('./src/routes/routes');
+routes(app); 
+
+//metto in ascolto il web server
+app.listen(3000, function () {
+  console.log('Node API server started on port 3000!');
+});
+

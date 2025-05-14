@@ -1,0 +1,124 @@
+cercare l'immagine ufficiale di mongodb
+sul repository di dockerhub 
+https://hub.docker.com/search?source=verified&type=image
+
+
+installare guardando info sul repository docker hub
+	https://hub.docker.com/_/mongo
+
+PER salvare nel container i dati bisogna
+modificare la directory in cui mongo scrive
+dati e configurazione.
+
+Si prende da 
+
+mkdir ./mydata
+mkdir ./mydata/db
+mkdir ./mydata/configdb
+
+docker run -d -p 27017-27019:27017-27019 -v ./mydata/db:/data/db  -v ./mydata/configdb:/data/configdb --name mongodb vic/mymongodb
+
+----------------------------------
+	use dbsa
+		db = db.getSiblingDB('dbsa')
+	db.createCollection("alignments")
+		db.createCollection('alignments', function(err, collection) {});
+	db.alignments.find()
+		cursor = db.alignments.find();
+		while ( cursor.hasNext() ) {
+			printjson( cursor.next() );
+		}
+	db.alignments.insert({"s1": "GCATGCU", "s2": "GATTACA", "as1": "GCATGC-U", "as2": "G-ATTACA"})
+	db.alignments.find()
+	exit
+
+----------------------------------
+File: dbinit.js
+eseguito con: /usr/bin/mongo dbinit.js
+
+var conn = new Mongo();
+var db = conn.getDB('dbsa');
+
+db.createCollection('alignments', function(err, collection) {});
+
+var cursor = db.alignments.find();
+while ( cursor.hasNext() ) {
+   printjson( cursor.next() );
+}
+
+db.alignments.insert({\"s1\": \"GCATGCU\", \"s2\": \"GATTACA\", \"as1\": \"GCATGC-U\", \"as2\": \"G-ATTACA\"})
+
+var cursor = db.alignments.find();
+while ( cursor.hasNext() ) {
+   printjson( cursor.next() );
+}
+----------------------------------
+
+"var conn = new Mongo(); var db = conn.getDB('dbsa'); var cursor = db.alignments.find(); while ( cursor.hasNext() ) { printjson( cursor.next() ); }"
+
+"var conn = new Mongo(); var db = conn.getDB('dbsa'); db.alignments.insert({"s1": "CAZCAZ", "s2": "ZACZAC", "as1": "CAZCAZ-U\", "as2": "G-ZACZACVAF\"});"
+
+
+
+
+
+
+
+
+db.createCollection('alignments', function(err, collection) {});
+
+
+
+var mongo = require('mongodb');
+var assert = require('assert');
+
+var MongoClient = mongo.MongoClient;
+var url = 'mongodb://localhost:27017/dbsa';
+
+MongoClient.connect(url, (err, db) => {
+    
+    assert.equal(null, err);
+           
+    db.listCollections().toArray((err, collections) => {
+        
+        assert.equal(err, null);
+
+        console.dir(collections);
+        
+        db.close();
+    });
+});
+
+
+
+----------------------------------
+
+ 2174  mkdir ./mydata
+ 2175  mkdir ./mydata/db
+ 2176  mkdir ./mydata/configdb
+
+ 2180  docker run -d -p 27017-27019:27017-27019 -v `pwd`/mydata/db:/data/db  -v `pwd`/mydata/configdb:/data/configdb --name mongodb mongo
+
+ 2184  docker exec -it mongodb /usr/bin/mongo
+
+	use dbsa
+	db.createCollection("alignments")
+	db.alignments.find()
+	db.alignments.insert({"s1": "GCATGCU", "s2": "GATTACA", "as1": "GCATGC-U", "as2": "G-ATTACA"})
+	db.alignments.find()
+	exit
+
+
+ 2185  docker stop mongodb
+ 2186  docker commit -m "added-alignments" -a "Vic" mongodb vic/mymongodb
+ 2187  docker rm mongodb
+ 
+
+ 2189  docker run -d -p 27017-27019:27017-27019 -v `pwd`/mydata/db:/data/db  -v `pwd`/mydata/configdb:/data/configdb --name mongodb vic/mymongodb
+ 2190  docker exec -it mongodb /usr/bin/mongo
+ 2191  docker stop mongodb
+ 2192  docker rm mongodb
+
+
+
+

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue 3 Form</title>
+  /* Stili per il messaggio di conferma 
+  <style>
+    .message {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+	*/
+</head>
+<body>
+  <div id="app">
+    <h1>Inserisci due sequenze</h1>
+    <form @submit.prevent="submitForm">
+      <label for="seq1">Sequence 1:</label>
+      <input type="text" v-model="seq1" id="seq1"><br><br>
+
+      <label for="seq2">Sequence 2:</label>
+      <input type="text" v-model="seq2" id="seq2"><br><br>
+
+      <!-- Campi non editabile per mostrare il risultato as1 as2
+      <label for="as1">as1:</label>
+      <input type="text" v-model="as1" id="as1" readonly /><br /><br />
+      <label for="as2">as2:</label>
+      <input type="text" v-model="as2" id="as2" readonly /><br /><br />
+			-->
+
+      <button type="submit">Submit</button>
+    </form>
+
+
+    <!-- Mostra le sequenze e il loro allineamento -->
+    <div v-if="alignmentResult">
+      <h3>Risultato:</h3>
+      <p>Sequence 1: {{ alignmentResult.s1 }}</p>
+      <p>Sequence 2: {{ alignmentResult.s2 }}</p>
+      <p>Aligned Sequence 1: {{ alignmentResult.as1 }}</p>
+      <p>Aligned Sequence 2: {{ alignmentResult.as2 }}</p>
+    </div>
+
+    <!-- Messaggio di errore -->
+    <div v-if="message" :class="['message', messageType]">{{ message }}</div>
+
+
+  </div>
+
+  <!-- Vue 3 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.2.45/dist/vue.global.js"></script>
+  <!-- Axios CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  
+  <script>
+    // Crea l'app Vue con Vue 3
+    const app = Vue.createApp({
+      data() {
+        return {
+          seq1: '', // Prima sequenza inserita
+          seq2: '', // Seconda sequenza inserita
+          alignmentResult: null, // Risultato di allineamento (contiene s1, s2, as1, as2)
+          message: '' // Messaggio di risposta dal server
+        };
+      },
+      methods: {
+        async submitForm() {
+          try {
+            // Invia la richiesta POST al server
+            const response = await axios.post('http://localhost:3000/submit', {
+              seq1: this.seq1,
+              seq2: this.seq2
+            });
+            // Memorizza il risultato dell'allineamento
+            this.alignmentResult = response.data;
+            this.seq1 = ''; // Resetta il campo di input
+            this.seq2 = ''; // Resetta il campo di input
+						<!--
+            this.s1 = this.alignmentResult.s1; // metto la prima stringa inviata e ricevuta
+            this.s2 = this.alignmentResult.s2; // metto la seconda stringa inviata e ricevuta
+						-->
+						<!--
+						// metto as1 in as1 ed as2 in as2
+            this.as1 = this.alignmentResult.as1; // metto la stringa prodotta
+            this.as2 = this.alignmentResult.as2; // metto la stringa prodotta
+						-->
+
+          } catch (error) {
+            this.message = 'Errore durante l\'invio delle sequenze.';
+            console.error(error);
+          }
+        }
+      }
+    });
+
+    // Monta l'app Vue sull'elemento con id="app"
+    app.mount('#app');
+  </script>
+</body>
+</html>
+
+
+
+
