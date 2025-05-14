@@ -1,0 +1,95 @@
+
+services:
+# il servizio che deve partire per secondo
+  nodejsapp:
+    build:
+      context: ./nodejs
+      dockerfile: Dockerfile
+      args:
+        - IMAGE_VERSION=non_serve
+    image: nodejsapp
+    command: [ "nodejs", "index.js" ]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+#        condition: service_started
+    environment:
+      - MIAVAR=non_serve__solo_come_esempio
+# Questa porta devo pubblicarla per vederla dall'host e fuori dall'host.
+    ports:
+      - 3000:3000
+    networks:
+      - esterna
+      - interna
+#
+# il servizio che deve partire per primo
+  mongodb:
+    build:
+      context: ./mongodb
+      dockerfile: Dockerfile
+      args:
+        - IMAGE_VERSION=non_serve
+    image: mymongo
+# il comando che deve essere eseguito dal container dopo che ne e' iniziata l'esecuzione.
+    command: [ "docker-entrypoint.sh", "mongod" ]
+    restart: always
+    healthcheck:
+      test: |
+        host=`hostname --ip-address || echo '127.0.0.1'`;
+        mongo --quiet $${host}/test --eval 'quit(db.runCommand({ ping: 1 }).ok ? 0 : 2)' && echo 0 || echo 1
+      interval: 5s
+
+# In questo caso le variabili di ambiente non servono
+# ENV MONGO_INITDB_DATABASE dbsa
+# Questa  variabile d'ambiente e' inutile perche' il nome
+# del database dbsa viene settato dal codice javascript
+# dell'altro container nodejsapp
+    environment:
+      - MONGO_INITDB_DATABASE=dbsa
+#
+# SPIEGAZIONE DEL PERCHE' NON PUBBLICO LE PORTE di mongodb
+# SE DUE CONTAINER CONDIVIDONO UNA user defined network NON OCCORRE PUBBLICARE LA PORTA, COMUNICANO LO STESSO.
+# LA PUBBLICAZIONE DELLE PORTE SERVE SOLO PER ACCEDERE AL SERVIZIO DALL'HOST O FUORI DALL'HOST.
+# Vedere  https://devops.stackexchange.com/questions/4514/internal-network-between-container-docker-compose-with-outgoing-connection
+#
+# To access a container from outside of the Docker host, you need to publish the port on the host mapping into the desired container (or service). Publishing ports with the ports section in the docker-compose.yml file is only needed to provide external access, not access between containers.
+# For container to container communication, it is not necessary to expose or publish the port. All that is needed is a user defined network in common between the containers. Then the containers can communicate using Docker's built-in DNS to resolve the service name and the application port inside that container. To avoid the external network from accessing these containers, do not publish any ports from them.
+#    ports:
+#      - 27017-27019:27017-27019
+    networks:
+      - interna
+#    VOGLIO USARE UN VOLUME ESTERNO per salvare i dati del DB.
+    volumes:
+      - type: volume
+        source: mydb
+        target: /data/db
+        volume:
+#       i files, che al momento della creazione del volume
+#       sono gia' presenti nella directory del container
+#       dove deve essere montato il volume,
+#       non vengono copiati nel volume
+          nocopy: true
+      - type: volume
+        source: myconfigdb
+        target: /data/configdb
+        volume:
+          nocopy: true
+
+networks:
+  interna:
+    driver: bridge
+    internal: true
+    driver_opts:
+       com.docker.network.bridge.name: "br-interna89012" 
+       com.docker.network.enable_ipv6: "false"
+  esterna:
+    driver: bridge
+    internal: false
+    driver_opts:
+       com.docker.network.bridge.name: "br-esterna89012" 
+       com.docker.network.enable_ipv6: "false"
+volumes:
+  mydb:
+  myconfigdb:
+
+

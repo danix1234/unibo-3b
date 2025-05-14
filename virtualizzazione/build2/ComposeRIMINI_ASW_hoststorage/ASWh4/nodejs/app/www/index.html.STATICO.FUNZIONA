@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sequences Alignment</title>
+<link rel="icon" href="data:,"> <!-- Evita la richiesta della favicon -->
+<style>
+</style>
+</head>
+
+<body>
+
+    <form action="/submit" method="POST">
+      <label for="seq1">Stringa 1:</label>
+      <input type="text" id="seq1" name="seq1" required><br><br>
+      
+      <label for="seq2">Stringa 2:</label>
+      <input type="text" id="seq2" name="seq2" required><br><br>
+      
+      <button type="submit">Invia</button>
+    </form>
+
+</body>
+</html>
+
+

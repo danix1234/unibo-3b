@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sequences Alignment</title>
+<style>
+</style>
+</head>
+
+<body>
+<div id="sa">
+	<h1>Amazing Movies</h1>
+	<label>Sequence 1: <input type="text" v-model="s1" /></label>
+	<label>Sequence 2: <input type="text" v-model="s2" /></label>
+	<button @click.prevent="alignSequence()">Align!</button>
+	<ul v-for="alignment in alignments">
+		<li>{{alignment.s1}} and {{alignment.s2}} results in {{alignment.as1}} and {{alignment.as2}}</li>
+	</ul>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+  var app = new Vue({
+	el: "#sa",
+	data() {
+	  return {
+			alignments: [],
+			s1: "",
+			s2: ""
+	  }
+	},
+	methods: {
+		alignSequence: function(){
+			axios.post('/', {"seq1": this.s1, "seq2": this.s2})
+				.then(response => {
+					this.alignments.push(response.data);
+				})
+				.catch(error => (console.log(error)));
+		}
+	}
+});
+</script>
+
+</body>
+</html>
+
+

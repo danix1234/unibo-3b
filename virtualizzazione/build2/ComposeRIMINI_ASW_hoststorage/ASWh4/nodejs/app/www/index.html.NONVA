@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sequences Alignment</title>
+<link rel="icon" href="data:,"> <!-- Evita la richiesta della favicon -->
+<style>
+</style>
+</head>
+
+<body>
+<div id="sa">
+	<h1>Bastardo maledetto</h1>
+	<label>Sequence 1: <input type="text" v-model="s1" /></label>
+	<label>Sequence 2: <input type="text" v-model="s2" /></label>
+	<button @click="alignSequence()">Align!</button>
+	<ul>
+      <li v-for="alignment in alignments" :key="alignment.s1 + alignment.s2">
+        {{ alignment.s1 }} and {{ alignment.s2 }} results in {{ alignment.as1 }} and {{ alignment.as2 }}
+      </li>
+	</ul>
+</div>
+// <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="https://unpkg.com/vue@next"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+  // Crea l'app Vue con Vue 3
+  const app = Vue.createApp({
+    data() {
+      return {
+			alignments: [],
+			s1: "",
+			s2: ""
+	  }
+	},
+
+
+//var app = new Vue({
+//	el: "#sa",
+//	data() {
+//	  return {
+//			alignments: [],
+//			s1: "",
+//			s2: ""
+//	  }
+//	},
+
+
+	methods: {
+		alignSequence: function(){
+
+		  if (this.s1 && this.s2) {  // Controlla che entrambe le sequenze siano non vuote
+
+//	  		axios.post('/', {"seq1": this.s1, "seq2": this.s2})
+			  axios.post('/submit', {"seq1": this.s1, "seq2": this.s2})
+				  .then(response => {
+					  this.alignments.push(response.data);
+				  })
+				  .catch(error => (console.log(error)));
+
+        this.s1 = ""; // Resetta il campo di input dopo l'invio
+        this.s2 = ""; // Resetta il campo di input dopo l'invio
+
+       } else {
+         alert("Please fill in both sequences!");  // Avvisa l'utente se manca qualche sequenza
+       }
+
+		}
+	}
+});
+</script>
+
+</body>
+</html>
+
+
