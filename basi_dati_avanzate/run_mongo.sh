@@ -1,5 +1,5 @@
 #!/bin/bash
 
 docker stop mongo-server
-docker run --rm -d -v mongodb_data:/data/db --name mongo-server mongo
+docker run --rm -d -v mongodb_data:/data/db --name mongo-server -p 5000:27017 mongo
 docker exec -it mongo-server bash
