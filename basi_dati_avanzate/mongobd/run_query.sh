@@ -5,4 +5,4 @@ export SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
 export QUERY_FILE="${SCRIPT_DIR}/queries.js"
 
 echo "${QUERY_FILE}" |
-    entr -c sh -c 'mongosh --quiet --eval "$(sed "s://.*::" "$QUERY_FILE" | tr -d "\n" )"'
+    entr sh -c 'clear; mongosh --quiet --eval "$(sed "s://.*::" "$QUERY_FILE" | tr -d "\n" )"'
