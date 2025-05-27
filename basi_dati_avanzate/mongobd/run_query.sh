@@ -6,6 +6,7 @@ QUERY_FILE="$1"
 
 if [[ "$(docker ps --filter "name=mongo-server" --format "{{.ID}}" | wc -l)" -eq 0 ]]; then
     docker run --rm -d -v mongodb_data:/data/db --name mongo-server -p 27017:27017 mongo
+    sleep 0.5
 fi &>/dev/null
 
 echo "${QUERY_FILE}" | entr bash -c "clear; sed '/^[[:space:]]*$/d; /^[[:space:]]*\/\//d' $QUERY_FILE | docker exec -i mongo-server mongosh --quiet"
