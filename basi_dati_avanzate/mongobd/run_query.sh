@@ -1,6 +1,7 @@
 #!/bin/bash
 
 QUERY_FILE="$1"
+DB_URL="$2"
 
 [[ ! -f "$QUERY_FILE" ]] && echo "not a file: $QUERY_FILE" && exit 1
 
@@ -9,4 +10,4 @@ if [[ "$(docker ps --filter "name=mongo-server" --format "{{.ID}}" | wc -l)" -eq
     sleep 0.5
 fi &>/dev/null
 
-echo "${QUERY_FILE}" | entr bash -c "clear; sed '/^[[:space:]]*$/d; /^[[:space:]]*\/\//d' $QUERY_FILE | docker exec -i mongo-server mongosh --quiet"
+echo "${QUERY_FILE}" | entr bash -c "clear; sed '/^[[:space:]]*$/d; /^[[:space:]]*\/\//d' $QUERY_FILE | docker exec -i mongo-server mongosh --quiet $DB_URL"
