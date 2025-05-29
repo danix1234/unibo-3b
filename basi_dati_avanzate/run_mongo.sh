@@ -7,16 +7,12 @@ function launch_server() {
         echo "launching the mongo container..." >/dev/tty
         docker run --rm -d -v mongodb_data:/data/db --name mongo-server --network none mongo
         sleep 1
-    else
-        echo "the mongo container is already running!" >/dev/tty
     fi &>/dev/null
 }
 function stop_server() {
     if [[ "$(docker ps --filter "name=mongo-server" --format "{{.ID}}" | wc -l)" -eq 1 ]]; then
         echo "stopping the mongo container..." >/dev/tty
         docker stop mongo-server
-    else
-        echo "mongo container is already not running!" >/dev/tty
     fi &>/dev/null
 }
 
