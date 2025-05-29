@@ -32,8 +32,7 @@ case "$*" in
     docker ps -a
     ;;
 "help" | "-h" | "--help" | "")
-    echo "
-Program to launch mongodb server, and run query file on a tracked file
+    echo "Program to launch mongodb server, and run query file on a tracked file
 
 Usage: ./run_mongo.sh [OPTION]|[QUERY_FILE [DB_URL]]
 
