@@ -112,3 +112,16 @@ g.aggregate([{
     }
 }])
 
+// 31. Eseguire l’unwind dell’array box e dell’array players, raggruppare per player per ottenere il totale di punti segnati; ordinare il risultato per visualizzare per primi i migliori giocatori del’NBA
+g.aggregate([{
+    $project: { "box.players": 1, _id: 0 }
+}, {
+    $unwind: { path: "$box" }
+}, {
+    $unwind: { path: "$box.players" }
+}, {
+    $group: { "_id": "$box.players.player", "pts": { "$sum": "$box.players.pts" } }
+}, {
+    $sort: { "pts": -1 }
+}])
+
