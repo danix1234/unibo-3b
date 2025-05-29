@@ -3,21 +3,21 @@
 QUERY_FILE="$1"
 
 function launch_server() {
-    if [[ "$(docker ps --filter "name=mongo-server" --format "{{.ID}}" | wc -l)" -eq 0 ]]; then
+    if [[ "$(podman ps --filter "name=mongo-server" --format "{{.ID}}" | wc -l)" -eq 0 ]]; then
         if [[ $1 == "show" ]]; then
             echo "launching the mongo container [WARNING: MONGO PORT SHOWN ON LOCALHOST!]..." >/dev/tty
-            docker run --rm -d -v mongodb_data:/data/db --name mongo-server -p27017:27017 mongo
+            podman run --rm -d -v mongodb_data:/data/db --name mongo-server -p27017:27017 docker.io/library/mongo:latest
         else
             echo "launching the mongo container..." >/dev/tty
-            docker run --rm -d -v mongodb_data:/data/db --name mongo-server --network none mongo
+            podman run --rm -d -v mongodb_data:/data/db --name mongo-server --network none docker.io/library/mongo:latest
         fi
         sleep 1
     fi &>/dev/null
 }
 function stop_server() {
-    if [[ "$(docker ps --filter "name=mongo-server" --format "{{.ID}}" | wc -l)" -eq 1 ]]; then
+    if [[ "$(podman ps --filter "name=mongo-server" --format "{{.ID}}" | wc -l)" -eq 1 ]]; then
         echo "stopping the mongo container..." >/dev/tty
-        docker stop mongo-server
+        podman stop mongo-server
     fi &>/dev/null
 }
 
@@ -33,7 +33,7 @@ case "$1" in
     launch_server "$2"
     ;;
 "show" | "ps")
-    docker ps -a
+    podman ps -a
     ;;
 "help" | "-h" | "--help" | "")
     echo "Program to launch mongodb server, and run query file on a tracked file
@@ -58,6 +58,6 @@ Otherwise:
 *)
     [[ ! -f "$QUERY_FILE" ]] && echo "not a file: $QUERY_FILE" && exit 1
     launch_server
-    echo "$QUERY_FILE" | entr sh -c "clear && docker exec -t mongo-server mongosh --quiet --eval \"\$(cat $QUERY_FILE)\""
+    echo "$QUERY_FILE" | entr sh -c "clear && podman exec -t mongo-server mongosh --quiet --eval \"\$(cat $QUERY_FILE)\""
     ;;
 esac
