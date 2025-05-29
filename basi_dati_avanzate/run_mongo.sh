@@ -1,12 +1,11 @@
 #!/bin/bash
 
 QUERY_FILE="$1"
-DB_URL="$2"
 
 function launch_server() {
     if [[ "$(docker ps --filter "name=mongo-server" --format "{{.ID}}" | wc -l)" -eq 0 ]]; then
         echo "launching the mongo container..." >/dev/tty
-        docker run --rm -d -v mongodb_data:/data/db --name mongo-server -p 27017:27017 mongo
+        docker run --rm -d -v mongodb_data:/data/db --name mongo-server -p 27017:27017 --network none mongo
         sleep 1
     else
         echo "the mongo container is already running!" >/dev/tty
@@ -50,6 +49,6 @@ Otherwise:
 *)
     [[ ! -f "$QUERY_FILE" ]] && echo "not a file: $QUERY_FILE" && exit 1
     launch_server
-    echo "$QUERY_FILE" | entr sh -c "clear && docker exec -t mongo-server mongosh --quiet $DB_URL --eval \"\$(cat $QUERY_FILE)\""
+    echo "$QUERY_FILE" | entr sh -c "clear && docker exec -t mongo-server mongosh --quiet --eval \"\$(cat $QUERY_FILE)\""
     ;;
 esac
