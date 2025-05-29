@@ -27,6 +27,10 @@ case "$*" in
 "launch" | "run")
     launch_server
     ;;
+"relaunch" | "restart")
+    stop_server
+    launch_server
+    ;;
 "show" | "ps")
     docker ps -a
     ;;
@@ -38,6 +42,7 @@ Usage: ./run_mongo.sh [OPTION]|[QUERY_FILE [DB_URL]]
 Options:
     end,stop            stop the mongo server
     launch,run          start the mongo server
+    relaunch,restart    restart the mongo server
     show,ps             show running containers
     help,-h,--help      print this help message
 
