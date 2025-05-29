@@ -71,3 +71,44 @@ g.aggregate([{
         team1_home: true,
     }
 }])
+
+// 28. Raggruppare per nome-squadra e calcolare la media punti fatta e subita (solo nelle partite vinte (team0))
+g.aggregate([{
+    $group: {
+        "_id": { $arrayElemAt: ["$teams.name", 0] },
+        "avgScoreDone": { "$avg": { $arrayElemAt: ["$teams.score", 0] } },
+        "avgScoreRecv": { "$avg": { $arrayElemAt: ["$teams.score", 1] } },
+    }
+}])
+
+// 29. Contare il numero di partite giocate per ogni mese, anno (ordinando il risultato su anno, mese)
+g.aggregate([{
+    $group: {
+        "_id": { year: { "$year": "$date" }, month: { "$month": "$date" } },
+        "matches": { $sum: 1 },
+    }
+}, {
+    $sort: { "_id.year": 1, "_id.month": 1 }
+}, {
+    $project: { "year": "$_id.year", "month": "$_id.month", _id: 0, matches: 1 }
+}])
+
+// 30. Eseguire l’unwind dell’array teams e raggruppare per team per ottenere il totale di: partite giocate, vinte, perse, punti segnati
+g.aggregate([{
+    $project: { box: 0 }
+}, {
+    $unwind: { path: "$teams" }
+}, {
+    $group: {
+        "_id": "$teams.name",
+        "played": { $sum: 1 },
+        "win": { $sum: "$teams.won" },
+        "totalScored": { $sum: "$teams.score" }
+    }
+}, {
+    $project: {
+        _id: 1, played: 1, win: 1, totalScored: 1,
+        lost: { $subtract: ["$played", "$win"] }
+    }
+}])
+
