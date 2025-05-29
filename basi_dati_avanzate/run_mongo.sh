@@ -50,6 +50,6 @@ Otherwise:
 *)
     [[ ! -f "$QUERY_FILE" ]] && echo "not a file: $QUERY_FILE" && exit 1
     launch_server
-    echo "$QUERY_FILE" | entr sh -c "clear && docker cp $QUERY_FILE mongo-server:/tmp/query.js >/dev/null && docker exec -t mongo-server mongosh --quiet $DB_URL --file /tmp/query.js"
+    echo "$QUERY_FILE" | entr sh -c "clear && docker exec -t mongo-server mongosh --quiet $DB_URL --eval \"\$(cat $QUERY_FILE)\""
     ;;
 esac
