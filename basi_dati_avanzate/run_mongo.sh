@@ -4,8 +4,13 @@ QUERY_FILE="$1"
 
 function launch_server() {
     if [[ "$(docker ps --filter "name=mongo-server" --format "{{.ID}}" | wc -l)" -eq 0 ]]; then
-        echo "launching the mongo container..." >/dev/tty
-        docker run --rm -d -v mongodb_data:/data/db --name mongo-server --network none mongo
+        if [[ $1 == "show" ]]; then
+            echo "launching the mongo container [WARNING: MONGO PORT SHOWN ON LOCALHOST!]..." >/dev/tty
+            docker run --rm -d -v mongodb_data:/data/db --name mongo-server -p27017:27017 mongo
+        else
+            echo "launching the mongo container..." >/dev/tty
+            docker run --rm -d -v mongodb_data:/data/db --name mongo-server --network none mongo
+        fi
         sleep 1
     fi &>/dev/null
 }
@@ -16,16 +21,16 @@ function stop_server() {
     fi &>/dev/null
 }
 
-case "$*" in
+case "$1" in
 "end" | "stop")
     stop_server
     ;;
 "launch" | "run")
-    launch_server
+    launch_server "$2"
     ;;
 "relaunch" | "restart")
     stop_server
-    launch_server
+    launch_server "$2"
     ;;
 "show" | "ps")
     docker ps -a
@@ -41,6 +46,9 @@ Options:
     relaunch,restart    restart the mongo server
     show,ps             show running containers
     help,-h,--help      print this help message
+
+Extra Options (launch,run,relaunch,restart):
+    show                make mongo server port available for everyone       
 
 Otherwise: 
     (1) QUERY_FILE      file with mongo queries which will be run every time it is saved
