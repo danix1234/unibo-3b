@@ -1,0 +1,75 @@
+
+APRO UN TERMINALE E VADO NELLA DIRECTORY DI MINUKUBE
+
+cd /cygdrive/c/DIDATTICA/SystemsIntegration_AmministrazioneDiSistemi/DISPENSE/MINIKUBE
+
+INIZIALIZZO IL CLUSTER MINIKUBE
+
+minikube stop
+minikube start --extra-config=kubelet.housekeeping-interval=10s
+minikube addons list
+minikube addons enable metrics-server
+
+FACCIO PARTIRE L'APPLICAZIONE BASE
+
+kubectl apply -f https://k8s.io/examples/application/php-apache.yaml
+kubectl get pods
+kubectl get pods --all-namespaces
+kubectl get hpa --all-namespaces
+
+CREO l'AUTOSCALER ORRIZZONTALE
+
+kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10
+kubectl get hpa --all-namespaces
+kubectl get hpa php-apache --watch
+
+
+IN UN ALTRO TERMINALE LANCIO IL GENERATORE DI CARICO
+kubectl run -i --tty load-generator --rm --image=busybox:1.28 --restart=Never -- /bin/sh -c "while sleep 0.01; do wget -q -O- http://php-apache; done"
+
+
+DI NUOVO NEL PRIMO TERMINALE VERIFICO CHE AUMENTA IL NUMERO DI PODS
+
+kubectl get hpa php-apache --watch
+$ kubectl get hpa php-apache --watch
+NAME         REFERENCE               TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+php-apache   Deployment/php-apache   0%/50%    1         10        1          4m45s
+php-apache   Deployment/php-apache   178%/50%   1         10        1          5m1s
+php-apache   Deployment/php-apache   178%/50%   1         10        4          5m16s
+php-apache   Deployment/php-apache   100%/50%   1         10        4          6m1s
+
+
+ASPETTO QUALCHE MINUTO PER VEDERE VARIAZIONI
+
+TORNO NEL SECONDO TERMINALE E KILLO CTRL+C IL GENERATORE DI CARICO
+
+ CTRL+C
+
+TORNO ANCORA NEL PRIMO TERMINALE E VERIFICO CHE DIMINUISCE IL NUMERO DI PODS
+
+$ kubectl get hpa php-apache --watch
+NAME         REFERENCE               TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+php-apache   Deployment/php-apache   0%/50%    1         10        1          4m45s
+php-apache   Deployment/php-apache   178%/50%   1         10        1          5m1s
+php-apache   Deployment/php-apache   178%/50%   1         10        4          5m16s
+php-apache   Deployment/php-apache   100%/50%   1         10        4          6m1s
+php-apache   Deployment/php-apache   76%/50%    1         10        4          7m1s
+php-apache   Deployment/php-apache   76%/50%    1         10        7          7m16s
+php-apache   Deployment/php-apache   28%/50%    1         10        7          8m1s
+php-apache   Deployment/php-apache   0%/50%     1         10        7          9m1s
+php-apache   Deployment/php-apache   0%/50%     1         10        7          12m
+php-apache   Deployment/php-apache   0%/50%     1         10        3          13m
+php-apache   Deployment/php-apache   0%/50%     1         10        3          13m
+php-apache   Deployment/php-apache   0%/50%     1         10        1          14m
+
+
+ELIMINO l'AUTOSCALER
+kubectl delete hpa php-apache
+kubectl get hpa
+
+ELIMINO L'APPLICAZIONE
+kubectl delete -f https://k8s.io/examples/application/php-apache.yaml
+
+TERMINO MINIKUBE
+minikube stop
+

@@ -1,0 +1,155 @@
+# Modificato da Vic 2023-05-23
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# At the moment this script does:
+# Deploy master & workers
+# Deploy Docker Registry
+# 
+# N.B. Need to manualy select the Network Interface at Runtime
+
+## Variables
+
+VAGRANTFILE_VERSION = "2"
+#BASEBOX = "ubuntu/xenial64"
+BASEBOX = "debian/bullseye64"
+MEMORY = "512"
+CPUS = 2
+INTERNAL_MANAGER_IP = "10.133.7.101"
+WORKERS = 1
+# aggiungo l'ultima (terza) cifra per formare l' IP
+INTERNAL_WORKER_IP = "10.133.7.11"
+
+#########################################
+## Scripts
+
+# VIENE USATO
+# Install Docker Script with convenience script
+# Lavoro come utente vagrant che 
+$install_docker_script = <<SCRIPT
+echo "Preparing machine..."
+who
+apt-get update  && \
+apt-get install -y curl  && \
+echo "Installing Docker..."  && \
+curl -fsSL https://get.docker.com -o get-docker.sh  && \
+sh ./get-docker.sh
+rm -f get-docker.sh 
+sudo groupadd docker
+sudo usermod -aG docker $USER
+sudo usermod -aG docker vagrant
+SCRIPT
+
+# VIENE USATO
+#Allow_insecure_registry
+$allow_insecure_registry = <<SCRIPT
+echo "Configure insecure registries for docker daemon..."
+sudo tee /etc/docker/daemon.json <<<'{ "insecure-registries": ["127.0.0.1:5000", "'#{INTERNAL_MANAGER_IP}':5000"] }'
+sudo chmod 644 /etc/docker/daemon.json
+sudo systemctl reload docker
+SCRIPT
+
+# VIENE USATO
+# Install utilities for test and debugging sush as ifconfig and jq
+# Lavoro come utente vagrant che 
+$install_utilities_script = <<SCRIPT
+echo "Install utilities..."
+who
+apt-get update  && \
+apt-get install -y jq
+SCRIPT
+
+# NON VIENE USATO MA FUNZIONA
+#Swarm init
+$swarm_init = <<SCRIPT
+echo "Initialize swarm..."
+docker swarm init --listen-addr #{INTERNAL_MANAGER_IP}:2377 --advertise-addr #{INTERNAL_MANAGER_IP}:2377
+SCRIPT
+
+# NON VIENE USATO MA FUNZIONA
+#Swarm get worker token
+$swarm_token_for_worker = <<SCRIPT
+echo "Saving worker token..."
+docker swarm join-token -q worker > /vagrant/worker_token
+SCRIPT
+
+# NON VIENE USATO MA FUNZIONA
+#Swarm worker join
+$swarm_worker_join = <<SCRIPT
+echo "Joining swarm..."
+docker swarm join --token $(cat /vagrant/worker_token) #{INTERNAL_MANAGER_IP}
+SCRIPT
+
+# NON VIENE USATO MA FUNZIONA
+#Deploy registry
+$registry_deploy = <<SCRIPT
+echo "Deploy registry..."
+docker service create --name registry --publish published=5000,target=5000 registry:2
+SCRIPT
+
+## Deploy
+
+Vagrant.configure(VAGRANTFILE_VERSION) do |config|
+    #Common setup
+    config.vm.box = BASEBOX
+    config.vm.synced_folder ".", "/vagrant", disabled: false
+    config.vm.provision "shell",inline: $install_docker_script, privileged: true
+    config.vm.provision "shell",inline: $allow_insecure_registry, privileged: true
+    config.vm.provision "shell",inline: $install_utilities_script, privileged: true
+    config.vm.provider "virtualbox" do |vb|
+        vb.memory = MEMORY
+        vb.cpus = CPUS
+    end
+
+## VIC: non uso piu' la cache esterna per i pacchetti APT
+#    config.vm.provision "shell", inline: <<-SHELL
+#      echo 'Acquire::http::Proxy "http://192.168.99.1:3142/";' >> /etc/apt/apt.conf
+#      # echo 'Acquire::http::Proxy "http://192.168.99.1:53142/";' >> /etc/apt/apt.conf
+#      chmod 644 /etc/apt/apt.conf
+#      apt-get update -y
+#    SHELL
+##    config.vm.provision 'shell', reboot: true
+##    config.vm.provision 'shell', inline: <<-SHELL
+##      echo 'reboot done'
+##    SHELL
+
+    # Setup Manager Nodes
+    config.vm.define "manager" do |manager|
+        # nat network ?
+        manager.vm.network :public_network, type: "dhcp"
+        # internal network
+        manager.vm.network :private_network, ip: "#{INTERNAL_MANAGER_IP}",
+            virtualbox__intnet: true
+        manager.vm.hostname = "manager"
+        manager.vm.network :forwarded_port, guest: 61000, host: 61000
+        #
+        # questi commentati fanno inizializzazione dello swarm manager e creano registry
+        #manager.vm.provision "shell",inline: $swarm_init
+        #manager.vm.provision "shell",inline: $swarm_token_for_worker
+        #manager.vm.provision "shell",inline: $registry_deploy
+    end
+
+    #Setup Woker Nodes
+    (1..WORKERS).each do |i|
+        config.vm.define "worker0#{i}" do |worker|
+            worker.vm.network :private_network, ip: "#{INTERNAL_WORKER_IP}#{i}",
+                virtualbox__intnet: true
+            worker.vm.hostname = "worker0#{i}"
+            #
+            # questo commentato fa il join dei worker
+            #worker.vm.provision "shell",inline: $swarm_worker_join
+        end
+    end
+end
+
