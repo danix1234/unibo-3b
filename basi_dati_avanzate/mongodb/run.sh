@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # notes:
-# - /tmp/query.js is the file to edit to make queries (do not delete!)
-# - requires `mongo-client` image, built from dockerfile
+#   - /tmp/query.js is the file to edit to make queries 
+#   - requires `mongo-client` image, built from dockerfile
 #
 # paramters:
 #   - kill|stop|rm  -> stop container
