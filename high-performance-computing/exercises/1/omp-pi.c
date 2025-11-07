@@ -137,20 +137,33 @@ unsigned int generate_points( unsigned int n )
 {
     /* [TODO] parallelize the body of this function */
     unsigned int n_inside = 0;
-    /* The C function `rand()` is not thread-safe, since it modifies a
-       global seed; therefore, it can not be used inside a parallel
-       region. We use `rand_r()` with an explicit per-thread
-       seed. However, this means that in general the result computed
-       by this program depends on the number of threads. */
-    unsigned int my_seed = 17 + 19*omp_get_thread_num();
-    for (int i=0; i<n; i++) {
-        /* Generate two random values in the range [-1, 1] */
-        const double x = (2.0 * rand_r(&my_seed)/(double)RAND_MAX) - 1.0;
-        const double y = (2.0 * rand_r(&my_seed)/(double)RAND_MAX) - 1.0;
-        if ( x*x + y*y <= 1.0 ) {
-            n_inside++;
+#pragma omp parallel default(none) shared(n, n_inside)
+    {
+        /* The C function `rand()` is not thread-safe, since it modifies a
+           global seed; therefore, it can not be used inside a parallel
+           region. We use `rand_r()` with an explicit per-thread
+           seed. However, this means that in general the result computed
+           by this program depends on the number of threads. */
+        unsigned int my_seed = 17 + 19*omp_get_thread_num();
+        int my_rank = omp_get_thread_num();
+        int num_threads = omp_get_num_threads();
+        int start = (n * my_rank) / num_threads;
+        int end = (n * (my_rank+1)) / num_threads;
+        int local_n_inside = 0;
+
+        for (int i=start; i<end; i++) {
+            /* Generate two random values in the range [-1, 1] */
+            const double x = (2.0 * rand_r(&my_seed)/(double)RAND_MAX) - 1.0;
+            const double y = (2.0 * rand_r(&my_seed)/(double)RAND_MAX) - 1.0;
+            if ( x*x + y*y <= 1.0 ) {
+                local_n_inside++;
+            }
         }
+
+#pragma omp atomic
+        n_inside += local_n_inside;
     }
+
     return n_inside;
 }
 
