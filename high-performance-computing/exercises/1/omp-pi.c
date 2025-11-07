@@ -137,7 +137,8 @@ unsigned int generate_points( unsigned int n )
 {
     /* [TODO] parallelize the body of this function */
     unsigned int n_inside = 0;
-#pragma omp parallel default(none) shared(n, n_inside)
+    int partial_results[omp_get_max_threads()];
+#pragma omp parallel default(none) shared(n, partial_results)
     {
         /* The C function `rand()` is not thread-safe, since it modifies a
            global seed; therefore, it can not be used inside a parallel
@@ -159,9 +160,11 @@ unsigned int generate_points( unsigned int n )
                 local_n_inside++;
             }
         }
+        partial_results[my_rank] = local_n_inside;
+    }
 
-#pragma omp atomic
-        n_inside += local_n_inside;
+    for (int i = 0; i < omp_get_max_threads(); i++){
+        n_inside += partial_results[i];
     }
 
     return n_inside;
