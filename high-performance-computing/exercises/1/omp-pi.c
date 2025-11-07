@@ -137,8 +137,7 @@ unsigned int generate_points( unsigned int n )
 {
     /* [TODO] parallelize the body of this function */
     unsigned int n_inside = 0;
-    int partial_results[omp_get_max_threads()];
-#pragma omp parallel default(none) shared(n, partial_results)
+#pragma omp parallel default(none) shared(n) reduction(+:n_inside)
     {
         /* The C function `rand()` is not thread-safe, since it modifies a
            global seed; therefore, it can not be used inside a parallel
@@ -146,25 +145,16 @@ unsigned int generate_points( unsigned int n )
            seed. However, this means that in general the result computed
            by this program depends on the number of threads. */
         unsigned int my_seed = 17 + 19*omp_get_thread_num();
-        int my_rank = omp_get_thread_num();
-        int num_threads = omp_get_num_threads();
-        int start = (n * my_rank) / num_threads;
-        int end = (n * (my_rank+1)) / num_threads;
-        int local_n_inside = 0;
 
-        for (int i=start; i<end; i++) {
+#pragma omp for
+        for (int i=0; i<n; i++) {
             /* Generate two random values in the range [-1, 1] */
             const double x = (2.0 * rand_r(&my_seed)/(double)RAND_MAX) - 1.0;
             const double y = (2.0 * rand_r(&my_seed)/(double)RAND_MAX) - 1.0;
             if ( x*x + y*y <= 1.0 ) {
-                local_n_inside++;
+                n_inside++;
             }
         }
-        partial_results[my_rank] = local_n_inside;
-    }
-
-    for (int i = 0; i < omp_get_max_threads(); i++){
-        n_inside += partial_results[i];
     }
 
     return n_inside;
