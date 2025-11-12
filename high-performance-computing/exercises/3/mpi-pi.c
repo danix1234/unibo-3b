@@ -146,7 +146,7 @@ int main( int argc, char *argv[] )
 
     // compute points
     inside = generate_points(local_npoints);
-    printf("process %d: %d in %d\n", my_rank, inside, local_npoints);
+    printf("PROCESS %d: %d in %d\n", my_rank, inside, local_npoints);
 
     // sync phase (everyone sends to rank 0)
 
@@ -155,8 +155,9 @@ int main( int argc, char *argv[] )
     }else{
         int recv_inside;
         for (int i = 1; i < comm_sz; i++){
-            MPI_Recv(&recv_inside, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&recv_inside, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             inside += recv_inside;
+            printf("RECV FROM PROCESS %d: %d\n", i, recv_inside);
         }
         pi_approx = 4.0 * inside / (double)npoints;
         printf("PI approximation is %f (true value=%f, rel error=%.3f%%)\n", pi_approx, M_PI, 100.0*fabs(pi_approx-M_PI)/M_PI);
