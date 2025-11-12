@@ -140,8 +140,24 @@ int main( int argc, char *argv[] )
 
     /* [TODO] This is not a true parallel version; the master does
        everything */
-    if ( 0 == my_rank ) {
-        inside = generate_points(npoints);
+    int start = npoints * my_rank / comm_sz;
+    int end = npoints * (my_rank+1) / comm_sz;
+    int local_npoints = end - start;
+
+    // compute points
+    inside = generate_points(local_npoints);
+    printf("process %d: %d in %d\n", my_rank, inside, local_npoints);
+
+    // sync phase (everyone sends to rank 0)
+
+    if ( 0 != my_rank ) {
+        MPI_Send(&inside, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    }else{
+        int recv_inside;
+        for (int i = 1; i < comm_sz; i++){
+            MPI_Recv(&recv_inside, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            inside += recv_inside;
+        }
         pi_approx = 4.0 * inside / (double)npoints;
         printf("PI approximation is %f (true value=%f, rel error=%.3f%%)\n", pi_approx, M_PI, 100.0*fabs(pi_approx-M_PI)/M_PI);
     }
