@@ -87,7 +87,31 @@ int main( int argc, char *argv[] )
     if ( argc > 1 ) {
         K = atoi(argv[1]);
     }
+
     /* [TODO] Rest of the code here... */
+    int value;
+    int prev = (my_rank + comm_sz - 1) % comm_sz;
+    int next = (my_rank + 1) % comm_sz;
+
+    if (my_rank == 0){
+        value = 0;
+        for (int i = 0; i < K; i++){
+            value++;
+            MPI_Send(&value, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
+            MPI_Recv(&value, 1, MPI_INT, prev, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+        if (K * comm_sz == value){
+            printf("OK (%d)\n", value);
+        } else {
+            printf("WRONG: expected (%d), actual (%d)\n", K * comm_sz, value);
+        }
+    }else{
+        for (int i = 0; i < K; i++){
+            MPI_Recv(&value, 1, MPI_INT, prev, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            value++;
+            MPI_Send(&value, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
+        }
+    }
 
     MPI_Finalize();
     return EXIT_SUCCESS;
