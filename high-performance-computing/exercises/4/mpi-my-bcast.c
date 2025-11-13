@@ -96,6 +96,21 @@ void my_Bcast(int *v)
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
     /* [TODO] */
+    // MPI_Bcast(v, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    
+    const int parent = (my_rank - 1) / 2;
+    const int left_son = (my_rank * 2) + 1;
+    const int right_son = (my_rank * 2) + 2;
+
+    if (my_rank != parent){
+        MPI_Recv(v, 1, MPI_INT, parent, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+    if (left_son < comm_sz){
+        MPI_Send(v, 1, MPI_INT, left_son, 0, MPI_COMM_WORLD); 
+    }
+    if (right_son < comm_sz){
+        MPI_Send(v, 1, MPI_INT, right_son, 0, MPI_COMM_WORLD); 
+    }
 }
 
 
@@ -115,7 +130,7 @@ int main( int argc, char *argv[] )
         v = -1;
     }
 
-    /* printf("BEFORE: value of `v` at rank %d = %d\n", my_rank, v); */
+    printf("BEFORE: value of `v` at rank %d = %d\n", my_rank, v);
 
     my_Bcast(&v);
 
