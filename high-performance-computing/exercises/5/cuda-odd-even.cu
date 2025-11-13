@@ -105,11 +105,12 @@ Example:
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-
 #include "hpc.h"
 
+#define BLKLEN 1024
+
 /* if *a > *b, swap them. Otherwise do nothing */
-void cmp_and_swap( int* a, int* b )
+__device__ void cmp_and_swap( int* a, int* b )
 {
     if ( *a > *b ) {
         int tmp = *a;
@@ -118,22 +119,33 @@ void cmp_and_swap( int* a, int* b )
     }
 }
 
+// phase: even -> 0, odd -> 1
+__global__ void odd_even_step(int *v, int n, int phase) {
+    int index = threadIdx.x + blockIdx.x * blockDim.x; 
+    int odd_index = index * 2 + 1;
+    int even_index = odd_index + 2 * phase  - 1;
+    int min_index = odd_index < even_index ? odd_index : even_index;
+    int max_index = odd_index > even_index ? odd_index : even_index;
+
+    if (max_index < n) {
+        cmp_and_swap(&v[min_index], &v[max_index]);
+    }
+}
 
 /* Odd-even transposition sort */
 void odd_even_sort( int* v, int n )
 {
+    int *d_v;
+    const int SIZE = n * sizeof(*v);
+
     for (int phase = 0; phase < n; phase++) {
-        if ( phase % 2 == 0 ) {
-            /* (even, odd) comparisons */
-            for (int i=0; i<n-1; i += 2 ) {
-                cmp_and_swap( &v[i], &v[i+1] );
-            }
-        } else {
-            /* (odd, even) comparisons */
-            for (int i=1; i<n-1; i += 2 ) {
-                cmp_and_swap( &v[i], &v[i+1] );
-            }
-        }
+        cudaMalloc((void **)&d_v, SIZE);
+        cudaMemcpy(d_v, v, SIZE, cudaMemcpyHostToDevice);
+
+        odd_even_step<<<(n/2 +BLKLEN - 1)/BLKLEN,BLKLEN>>>(d_v, n, phase);
+
+        cudaMemcpy(v, d_v, SIZE, cudaMemcpyDeviceToHost);
+        cudaFree(d_v);
     }
 }
 
