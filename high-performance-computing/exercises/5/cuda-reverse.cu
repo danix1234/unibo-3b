@@ -158,16 +158,32 @@ void reverse( int *in, int *out, int n )
    - copies data back from device to host
    - deallocates memory on the device
 */
+
+__global__ void inplace_reverse_kernel(int *in, int n){
+    int actual_n = n / 2; 
+    int idx = threadIdx.x + blockIdx.x * blockDim.x; 
+    int idx_pair = n - 1 - idx;
+
+    if (idx < actual_n) {
+        in[idx] ^= in[idx_pair];
+        in[idx_pair] ^= in[idx];
+        in[idx] ^= in[idx_pair];
+    }
+}
+
 void inplace_reverse( int *in, int n )
 {
-    int i = 0, j = n-1;
-    while (i < j) {
-        const int tmp = in[j];
-        in[j] = in[i];
-        in[i] = tmp;
-        j--;
-        i++;
-    }
+    int *d_in;
+    int actual_n = n / 2;
+    const int SIZE = n * sizeof(*in);
+
+    cudaMalloc((void **)&d_in, SIZE);
+    cudaMemcpy(d_in, in, SIZE, cudaMemcpyHostToDevice);
+    
+    inplace_reverse_kernel<<<(actual_n+BLKLEN-1)/BLKLEN, BLKLEN>>>(d_in, n);
+
+    cudaMemcpy(in, d_in, SIZE, cudaMemcpyDeviceToHost);
+    cudaFree(d_in);
 }
 
 void fill( int *x, int n )
