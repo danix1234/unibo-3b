@@ -105,6 +105,7 @@ Example:
 #include <math.h>
 #include <assert.h>
 
+#define BLKLEN 1024
 
 /* Reverses `in[]` into `out[]`; assume that `in[]` and `out[]` do not
    overlap.
@@ -116,12 +117,35 @@ Example:
    - copies data back from device to host
    - deallocates memory on the device
  */
+
+__global__ void reverse_kernel(int *in, int *out, int n){
+    int idx = threadIdx.x + blockIdx.x * blockDim.x; 
+
+    if (idx < n){
+        out[idx] = in[n - 1 - idx];
+    } 
+}
+
 void reverse( int *in, int *out, int n )
 {
-    for (int i=0; i<n; i++) {
-        const int opp = n - 1 - i;
-        out[opp] = in[i];
-    }
+    int *d_in, *d_out;
+    const size_t SIZE = n * sizeof(*in);
+
+    // allocate gpu memory
+    cudaMalloc((void **)&d_in, SIZE);
+    cudaMalloc((void **)&d_out, SIZE);
+
+    // copy in array to gpu
+    cudaMemcpy(d_in, in, SIZE, cudaMemcpyHostToDevice);
+
+    reverse_kernel<<<(n+BLKLEN-1)/BLKLEN,BLKLEN>>>(d_in, d_out, n);
+
+    // copy out array to host
+    cudaMemcpy(out, d_out, SIZE, cudaMemcpyDeviceToHost);
+
+    // cleanup
+    cudaFree(d_in);
+    cudaFree(d_out);
 }
 
 
