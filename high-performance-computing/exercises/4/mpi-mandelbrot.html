@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Moreno Marzolla" />
+  <title>Mandelbrot set</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="lab.css" />
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+  type="text/javascript"></script>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Mandelbrot set</h1>
+<p class="author"><a
+href="https://www.unibo.it/sitoweb/moreno.marzolla">Moreno
+Marzolla</a></p>
+<p class="date">Last updated: 2025-10-09</p>
+</header>
+<figure>
+<img src="mandelbrot-set.png" alt="Figure 1: The Mandelbrot set." />
+<figcaption aria-hidden="true">Figure 1: The Mandelbrot
+set.</figcaption>
+</figure>
+<p>The file <a href="mpi-mandelbrot.c">mpi-mandelbrot.c</a> contains a
+MPI program that computes the Mandelbrot set; it is not a parallel
+program, because the master process does everything.</p>
+<p>The program accepts the image height as an optional command-line
+parameter; the width is computed automatically to include the whole set.
+Process 0 writes the output image to the file <code>mandebrot.ppm</code>
+in PPM (<em>Portable Pixmap</em>) format. To convert the image, e.g., to
+PNG you can use the following command on the Linux server:</p>
+<pre><code>    convert mandelbrot.ppm mandelbrot.png</code></pre>
+<p>Write a parallel version where all MPI processes contribute to the
+computation. To do this, we can partition the image into <span
+class="math inline">\(P\)</span> vertical blocks where <span
+class="math inline">\(P\)</span> is the number of MPI processes, and let
+each process draws a portion of the image (see Figure 2).</p>
+<figure>
+<img src="mpi-mandelbrot.png"
+alt="Figure 2: Domain decomposition for the computation of the Mandelbrot set with 4 MPI processes" />
+<figcaption aria-hidden="true">Figure 2: Domain decomposition for the
+computation of the Mandelbrot set with 4 MPI processes</figcaption>
+</figure>
+<p>Specifically, each process computes a portion of the image of size
+<span class="math inline">\(\mathit{xsize} \times (\mathit{ysize} /
+P)\)</span> (see below how to handle the case where <em>ysize</em> is
+not an integer multiple of <span class="math inline">\(P\)</span>). This
+is an <em>embarrassingly parallel</em> computation, since there is no
+need to communicate. At the end, the processes send their local result
+to the master using the <code>MPI_Gather()</code> function, so that the
+master can assemble the image. We use three bytes to encode the color of
+each pixel, so the <code>MPI_Gather()</code> operation will transfer
+blocks of <span class="math inline">\((3 \times \mathit{xsize} \times
+\mathit{ysize} / P)\)</span> elements of type <code>MPI_BYTE</code>.</p>
+<p>You can initially assume that <em>ysize</em> is an integer multiple
+of <span class="math inline">\(P\)</span>, and then relax this
+assumption, e.g., by letting process 0 take care of the last
+<code>(ysize % P)</code> rows. Alternatively, you can use blocks of
+different sizes and use <code>MPI_Gatherv()</code> to combine them.</p>
+<p>You might want to keep the serial program as a reference. To check
+the correctness of the parallel implementation, compare the output
+images produced by the serial and parallel versions with the
+command:</p>
+<pre><code>    cmp file1 file2</code></pre>
+<p>They must be identical, i.e., the <code>cmp</code> program should
+print no message.</p>
+<p>To compile:</p>
+<pre><code>    mpicc -std=c99 -Wall -Wpedantic mpi-mandelbrot.c -o mpi-mandelbrot</code></pre>
+<p>To execute:</p>
+<pre><code>    mpirun -n NPROC ./mpi-mandelbrot [ysize]</code></pre>
+<p>Example:</p>
+<pre><code>    mpirun -n 4 ./mpi-mandelbrot 800</code></pre>
+<h2 id="files">Files</h2>
+<ul>
+<li><a href="mpi-mandelbrot.c">mpi-mandelbrot.c</a></li>
+</ul>
+</body>
+</html>
