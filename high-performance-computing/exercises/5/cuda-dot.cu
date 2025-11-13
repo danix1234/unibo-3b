@@ -87,6 +87,28 @@ Example:
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#define BLKLEN 1024
+
+
+__global__ void dot_kernel(const float *x, const float *y, int n, float *result) {
+    __shared__ float tmp[BLKLEN];
+    const int tid = threadIdx.x;
+    float s = 0.0;
+
+    for (int i = tid; i < n; i+=BLKLEN){
+        s += x[i] * y[i];
+    }
+    tmp[tid] = s;
+
+    __syncthreads();
+
+    if (0 == tid){
+        *result = 0.0;
+        for (int i = 0; i < BLKLEN; i++){
+            *result += tmp[i];
+        }
+    }
+}
 
 
 float dot( const float *x, const float *y, int n )
@@ -94,25 +116,27 @@ float dot( const float *x, const float *y, int n )
     /* [TODO] modify this function so that (part of) the computation
        is executed on the GPU. You may want to follow the steps
        below. */
+    float *d_x, *d_y, *d_result;
+    float result;
+    const size_t SIZE_XY = n * sizeof(float);
+    const size_t SIZE_RESULT = sizeof(float);
 
-    /* Define a `float` variabile `result` in host memory */
+    cudaMalloc((void **)&d_x, SIZE_XY);
+    cudaMalloc((void **)&d_y, SIZE_XY);
+    cudaMalloc((void **)&d_result, SIZE_RESULT);
 
-    /* Allocate space for device copies of `x`, `y` and `result` */
+    cudaMemcpy(d_x, x, SIZE_XY, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_y, y, SIZE_XY, cudaMemcpyHostToDevice);
 
-    /* Copy `x`, `y` from host to device */
+    dot_kernel<<<1, BLKLEN>>>(d_x, d_y, n, d_result);
+    cudaCheckError(); // explicit syncronization
+    
+    cudaMemcpy(&result, d_result, SIZE_RESULT, cudaMemcpyDeviceToHost);
 
-    /* Launch a suitable kernel on the GPU */
+    cudaFree(d_x);
+    cudaFree(d_y);
+    cudaFree(d_result);
 
-    /* Copy the value of `result` back to host memory */
-
-    /* Perform the final reduction on the CPU */
-
-    /* Free device memory */
-
-    float result = 0.0;
-    for (int i = 0; i < n; i++) {
-        result += x[i] * y[i];
-    }
     return result;
 }
 
